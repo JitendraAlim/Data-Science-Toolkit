@@ -1,0 +1,1163 @@
+---
+title: <h1 style="color:#33AACC; font-size:500%; text-align:center">Supervised Learning in R \n Regression</h1>
+output:
+  html_document:
+    df_print: paged
+---
+
+***
+
+<center><img src="https://assets.datacamp.com/production/course_3851/shields/original/shield_image_course_3851_20200115-1-z9nuqg?1579124889" alt="Supervised Learning in R: Regression"></center>
+
+```{r, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(comment = NA)
+knitr::opts_chunk$set(out.width='750px', dpi=200)
+knitr::opts_chunk$set(fig.align='center')
+```
+
+***
+
+# What is Regression?
+Regression predicts a numerical outcome ("dependent variable") from a set of inputs ("independent variables").
+
+* Statistical Sense: Predicting the expected value of the outcome.
+* Casual Sense: Predicting a numerical outcome, rather than a discrete one.
+* Scientific Mindset: Modeling to understand the data generation process.
+
+***
+# Identify the Regression Tasks
+From a machine learning perspective, the term regression generally encompasses the prediction of continuous values. Statistically, these predictions are the expected value, or the average value one would observe for the given input values.
+
+Which of the following tasks are regression problems?
+
+* Predict (yes/no) whether a student will pass the final exam, given scores on midterms and homework.
+* Predict the student's score (0 - 100) on the final exam, given scores on midterms and homework. (Correct)
+* Predict the student's final grade (A, B, C, D, F) in the class given scores on midterms and homework (before they've taken the final exam).
+
+***
+# Code a Simple Linear Regression
+For the first coding exercise, you'll create a formula to define a one-variable modeling task, and then fit a linear model to the data. You are given the rates of male and female unemployment in the United States over several years. [(Unemployment Data)](https://college.cengage.com/mathematics/brase/understandable_statistics/7e/students/datasets/slr/excel/slr04.xls).\
+
+The task is to predict the rate of female unemployment from the observed rate of male unemployment. The outcome is `female_unemployment`, and the input is `male_unemployment.`\
+
+The sign of the variable coefficient tells you whether the outcome increases (+) or decreases (-) as the variable increases.\
+Recall the calling interface for `lm()` is: `lm(formula, data = ___)`
+
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+```{r, echo=FALSE, message=FALSE}
+unemployment <- read_csv(file = "US Unemployment.csv")
+```
+
+```{r}
+# unemployment is loaded in the workspace
+head(unemployment)
+
+# Define a formula to express female_unemployment as a function of male_unemployment
+(fmla <- as.formula(female_unemployment ~ male_unemployment))
+
+# Use the formula to fit a model: unemployment_model
+(unemployment_model <- lm(formula = fmla,
+                         data = unemployment))
+```
+The coefficient for male unemployment is positive, so female unemployment increases as male unemployment does. Linear regression is the most basic of regression approaches. You can think of this course as ways to address its limitations.
+
+***
+# Examining a Model
+Let's look at the model `unemployment_model` that you have just created. There are a variety of different ways to examine a model; each way provides different information. We will use `summary()`, `broom::glance()`, and `sigr::wrapFTest()`.
+
+```{r}
+library(broom)
+library(sigr)
+
+# Print unemployment_model
+unemployment_model
+
+# Call summary() on unemployment_model to get more details. In addition to the coefficient values, you get standard errors on the coefficient estimates, and some goodness-of-fit metrics like R-squared.
+summary(unemployment_model)
+
+# Call wrapFTest() on unemployment_model to see the most relevant details
+wrapFTest(unemployment_model)
+```
+There are several different ways to get diagnostics for your model. Use the one that suits your needs or preferences the best.
+
+***
+# Predicting using a Model
+In this exercise, you will use your `unemployment_model` to make predictions from the `unemployment` data, and compare predicted female unemployment rates to the actual observed female unemployment rates on the training data, `unemployment`. You will also use your model to predict on the new data in `newrates`, which consists of only one observation, where male unemployment is 5%.
+
+The `predict()` interface for `lm` models takes the form `predict(model, newdata)`
+
+You will use the `ggplot2` package to make the plots, so you will add the prediction column to the `unemployment` data frame. You will plot outcome versus prediction, and compare them to the line that represents perfect predictions (that is when the outcome is equal to the predicted value).
+
+The `ggplot2` command to plot a scatterplot of `dframe$outcome` versus `dframe$pred` (`pred` on the x axis, `outcome` on the y axis), along with a blue line where `outcome == pred` is as follows:
+
+`ggplot(dframe, aes(x = pred, y = outcome)) +` \
+`geom_point() +`  \
+`geom_abline(color = "blue")`
+
+```{r}
+# Predict female unemployment in the unemployment data set
+unemployment$predictions <-  predict(object = unemployment_model,
+                                    newdata = unemployment)
+
+# Make a plot to compare predictions to actual (prediction on x axis). 
+ggplot(unemployment,
+       aes(x = predictions,
+           y = female_unemployment)) + 
+  geom_point() +
+  geom_abline(color = "blue") +
+  theme_classic()
+
+# Predict female unemployment rate when male unemployment is 5%
+newrates <- data.frame(male_unemployment = 5)
+pred <- predict(object = unemployment_model,
+                newdata = newrates)
+# Print it
+pred
+```
+***
+# Multivariate Linear Regression - Model Building
+In this exercise, you will work with the `blood pressure` dataset (Source), and model `blood_pressure` as a function of `age` and `weight`. [(Blood Pressure)](https://college.cengage.com/mathematics/brase/understandable_statistics/7e/students/datasets/mlr/excel/mlr02.xls)
+
+```{r, echo=FALSE, message=FALSE}
+bloodpressure <- read_csv(file = "Blood Pressure.csv")
+```
+
+```{r}
+# bloodpressure is in the workspace
+head(bloodpressure)
+
+# Create the formula and print it
+fmla <- as.formula(blood_pressure ~ age + weight)
+fmla
+
+# Fit the model: bloodpressure_model
+bloodpressure_model <- lm(formula = fmla,
+                          data = bloodpressure)
+
+# Print bloodpressure_model
+bloodpressure_model
+
+# Call summary() on bloodpressure_model
+summary(bloodpressure_model)
+```
+
+One of the advantages of linear regression is that you can interpret the effects of each variable on the input – to a certain extent. In this case the coefficients for both age and weight are positive, which indicates that bloodpressure tends to increase as both age and weight increase.
+
+***
+# Multivariate Linear Regression - Prediction
+Now you will make predictions using the blood pressure model `bloodpressure_model` that you fit in the previous exercise.
+You will also compare the predictions to outcomes graphically. `ggplot2` is already loaded in your workspace. Recall the plot command takes the form:
+
+`ggplot(dframe, aes(x = pred, y = outcome)) +` \
+`geom_point() +`\
+`geom_abline(color = "blue")`
+
+```{r}
+# predict blood pressure using bloodpressure_model :prediction
+bloodpressure$prediction <- predict(object = bloodpressure_model,
+                                    newdata = bloodpressure)
+
+# plot the results
+ggplot(bloodpressure,
+       aes(x = prediction,
+           y = blood_pressure)) + 
+    geom_point() +
+    geom_abline(color = "blue") +
+    theme_classic()
+```
+
+The results stay fairly close to the line of perfect prediction, indicating that the model fits the training data well. From a prediction perspective, multivariate linear regression behaves much as simple (one-variable) linear regression does.
+
+***
+# Wrapping up Linear Regression
+
+* Pros of Linear Regression
+  + East to fit and apply
+  + Concise
+  + Less prone to overfitting
+  + Interpretable
+
+* Cons
+  + Can only express Linear and Additive relationships
+  + Problem of Collinearity (Coefficients might change sign)
+  + Due to High Collinearity, model can become unstable
+
+***
+# Graphically Evaluate the Model
+The Ground Truth vs Prediction plot is the one in which predictions are plotted on the x-axis and original variable is plotted on the y-axis.
+
+In this plot, the line `x = y` represents the line of perfect prediction. If the model predicts perfectly, all of the points are along the line.
+
+You should look for the points to be evenly above and below the line. This means that the errors are not correlated with the actual outcome.
+
+When the model doesn't fit well, there are regions where the points are entirely above or below the line. This demonstrates Systematic Errors: errors that are correlated with the outcome. This can indicate that you don't have enough variables in the model or you need an algorithm that can fit more complex relationships in the data.
+
+***
+# Residuals Plot
+A residual plot plots the residuals against predictions. In a model with no systematic errors, the errors are evenly distributed between positive and negative, annd have same magnitude above and below. When there are systematic errors, there are clusters of all positive and all negative residuals.
+
+In this exercise, you will graphically evaluate the unemployment model, `unemployment_model`, that you fit to the `unemployment` data in the previous chapter. Recall that the model predicts `female_unemployment` from `male_unemployment`.
+
+You will plot the model's predictions against the actual `female_unemployment`; recall the command is of the form
+
+`ggplot(dframe, aes(x = pred, y = outcome)) + `\
+`geom_point() + `\
+`geom_abline()`
+
+Then you will calculate the residuals:
+`residuals <- actual outcome - predicted outcome`
+
+and plot predictions against residuals. The residual graph will take a slightly different form: you compare the residuals to the horizontal line x=0 using `geom_hline()` rather than to the line x=y.
+
+```{r}
+# Calculate residuals
+unemployment$residuals <- unemployment$female_unemployment - unemployment$predictions
+
+ggplot(unemployment,
+       aes(x = predictions,
+           y = residuals)) + 
+  geom_pointrange(aes(ymin = 0, ymax = residuals)) + 
+  geom_hline(yintercept = 0, linetype = 3) + 
+  ggtitle("residuals vs. linear model prediction") + 
+  theme_classic()
+```
+
+You have now evaluated model predictions by comparing them to ground truth, and by examining prediction error.
+
+***
+# Gain Curve Plot
+
+The Gain Curve Plot is useful when sorting the instances is more important than predicting the exact outcome value.
+The x-axis shows the fraction of predictions as sorted by the model. The y-axis shows the fraction of original outcome. 
+
+In the previous exercise you made predictions about `female_unemployment` and visualized the predictions and the residuals. Now, you will also plot the gain curve of the    's predictions against actual `female_unemployment` using the `WVPlots::GainCurvePlot()` function.
+
+For situations where order is more important than exact values, the gain curve helps you check if the model's predictions sort in the same order as the true outcome.
+
+Calls to the function `GainCurvePlot()` look like:
+
+`GainCurvePlot(frame, xvar, truthvar, title)`
+
+where
+* `frame` is a data frame
+* `xvar` and `truthvar` are strings naming the prediction and actual outcome columns of `frame`
+* `title` is the title of the plot
+
+When the predictions sort in exactly the same order, the relative Gini coefficient is 1. When the model sorts poorly, the relative Gini coefficient is close to zero, or even negative.
+
+```{r, message=FALSE}
+# Load the package WVPlots
+library(WVPlots)
+```
+
+```{r}
+# Plot the Gain Curve
+GainCurvePlot(frame = unemployment,
+              "predictions",
+              "female_unemployment",
+              "Unemployment model")
+```
+
+A relative gini coefficient close to one shows that the model correctly sorts high unemployment situations from lower ones.
+
+***
+# Root Mean Squared Error
+Root Mean Squared Error is a key metric to evaluate prediction performance of a regression model. $$RMSE = \sqrt{\overline{(pred - actual)^2}}$$
+
+
+Compare the RMSE to the Standard Deviation of the outcome.
+
+Standard Deviation is the average difference between the a value and it's average.
+
+If RMSE is less than Standard Deviation then it means that the model is better than just predicting the average value.
+
+***
+# Calculate RMSE
+In this exercise you will calculate the RMSE of your unemployment model. In the previous coding exercises, you added two columns to the `unemployment` dataset:
+
+* The model's predictions (`predictions` column)
+* The residuals between the predictions and the outcome (`residuals` column)
+
+You can calculate the RMSE from a vector of residuals, res, as:
+$$RMSE = \sqrt{mean(res^2)}$$
+
+You want RMSE to be small. How small is "small"? One heuristic is to compare the RMSE to the standard deviation of the outcome. With a good model, the RMSE should be smaller.
+
+An RMSE much smaller than the outcome's standard deviation suggests a model that predicts well.
+
+```{r}
+# Calculate RMSE, assign it to the variable rmse and print it
+rmse <- sqrt(mean(unemployment$residuals^2))
+rmse
+
+# Calculate the standard deviation of female_unemployment and print it
+sd_unemployment <- sd(unemployment$female_unemployment)
+sd_unemployment
+```
+
+***
+# R-Squared
+
+R-Square measures of how well the model fits or explains the data.
+
+It takes values between 0 and 1.
+
+  * Near 1: Model fits the data well.
+  * Near 0: Models is no better than just guessing the average value.
+
+$R^2$ is the variance explained by the model.
+$$R^2 = 1 - \frac{RSS}{TSS}$$
+
+Where;
+
+  * RSS: Residual Sum of Squares (Variance from the model)
+  * TSS: Total Sum of Squares (Variance from the data)
+  
+***
+# Calculate R-Squared
+Now that you've calculated the RMSE of your model's predictions, you will examine how well the model fits the data: that is, how much variance does it explain. You can do this using $R^2$.
+
+Suppose y is the true outcome, p is the prediction from the model, and res=y−p are the residuals of the predictions.
+
+Then the Total Sum of Squares: TSS ("total variance") of the data is:
+$$TSS = \sum(y - \overline{y})^2$$
+
+The Residual Sum of Squared errors of the model, RSS is:
+$$RSS = \sum(y_{actual} - y_{pred})^2$$
+
+After you calculate $R^2$, you will compare what you computed with the $R^2$ reported by `glance()`. `glance()` returns a one-row data frame; for a linear regression model, one of the columns returned is the R2 of the model on the training data.
+
+The data frame `unemployment` is in your workspace, with the columns `predictions` and `residuals` that you calculated in a previous exercise.
+
+```{r}
+# Calculate mean female_unemployment: fe_mean. Print it
+(fe_mean <- mean(unemployment$female_unemployment))
+
+# Calculate total sum of squares: tss. Print it
+(tss <- sum((unemployment$female_unemployment - mean(unemployment$female_unemployment))^2))
+
+# Calculate residual sum of squares: rss. Print it
+(rss <- sum(unemployment$residuals^2))
+
+# Calculate R-squared: rsq. Print it. Is it a good fit?
+(rsq <- 1 - (rss)/(tss))
+
+# Get R-squared from glance. Print it
+(rsq_glance <- glance(unemployment_model)$r.squared)
+```
+
+***
+# Correlation and R-squared
+The linear correlation of two variables, x and y, measures the strength of the linear relationship between them. When x and y are respectively:
+
+  * The outcomes of a regression model that minimizes squared-error (like linear regression) and
+  * The true outcomes of the training data,
+
+then the square of the correlation is the same as $R^2$. You will verify that in this exercise.
+
+```{r}
+# Get the correlation between the prediction and true outcome: rho and print it
+(rho <- cor(unemployment$predictions,
+            unemployment$female_unemployment))
+
+# Square rho: rho2 and print it
+(rho2 <- rho^2)
+
+# Get R-squared from glance and print it
+(rsq_glance <- glance(unemployment_model)$r.squared)
+```
+
+Remember this equivalence is only true for the training data, and only for models that minimize squared error.
+
+***
+# Properly Training a Model
+Model can perform much better on the training data than the data the model hasn't seen.
+To overcome this and evaluate your model on unseen data. Split the data into 2 parts viz. Training data and Testing data. Evaluate the performance of the model on the Testing data.
+
+***
+# Generating a Random Test/Train Split
+For the next several exercises you will use the `mpg` data from the package `ggplot2.` The data describes the characteristics of several makes and models of cars from different years. The goal is to predict city fuel efficiency from highway fuel efficiency.
+
+In this exercise, you will split `mpg` into a training set `mpg_train` (75% of the data) and a test set `mpg_test` (25% of the data). One way to do this is to generate a column of uniform random numbers between 0 and 1, using the function `runif()`.
+
+If you have a data set of size N, and you want a random subset of approximately size $100\times X$% of N (where X is between 0 and 1), then:
+
+1. Generate a vector of uniform random numbers: `gp = runif(N)`.
+2. `dframe[gp < X,]` will be about the right size.
+3. `dframe[gp >= X,]` will be the complement.
+
+```{r}
+# Loading mpg data
+data("mpg")
+dim(mpg)
+
+# Use nrow to get the number of rows in mpg (N) and print it
+(N <- nrow(mpg))
+
+# Calculate how many rows 75% of N should be and print it
+# Hint: use round() to get an integer
+(target <- round(0.75 * N))
+
+# Create the vector of N uniform random variables: gp
+gp <- runif(N)
+
+# Use gp to create the training set: mpg_train (75% of data) and mpg_test (25% of data)
+mpg_train <- mpg[gp < 0.75,]
+mpg_test <- mpg[gp >= 0.75,]
+
+# Use nrow() to examine mpg_train and mpg_test
+nrow(mpg_train)
+nrow(mpg_test)
+```
+
+***
+# Train a model using Test/Train Split
+Now that you have split the `mpg` dataset into `mpg_train` and `mpg_test`, you will use `mpg_train` to train a model to predict city fuel efficiency (`cty`) from highway fuel efficiency (`hwy`).
+
+```{r}
+# Create a formula to express cty as a function of hwy: fmla and print it.
+(fmla <- formula(cty ~ hwy))
+
+# Now use lm() to build a model mpg_model from mpg_train that predicts cty from hwy 
+mpg_model <- lm(formula = fmla,
+                data = mpg_train)
+
+# Use summary() to examine the model
+summary(mpg_model)
+```
+
+***
+# Evaluate a Model using Test/Train Split
+Now you will test the model `mpg_model` on the test data, `mpg_test.` Functions `rmse()` and `r_squared()` to calculate RMSE and R-squared have been provided for convenience:
+
+`rmse(predcol, ycol)`
+`r_squared(predcol, ycol)`
+
+where:
+
+  * predcol: The predicted values
+  * ycol: The actual outcome
+
+You will also plot the predictions vs. the outcome.
+
+Generally, model performance is better on the training data than the test data (though sometimes the test set "gets lucky"). A slight difference in performance is okay; if the performance on training is significantly better, there is a problem.
+
+```{r}
+# predict cty from hwy for the training set
+mpg_train$pred <- predict(object = mpg_model,
+                          newdata = mpg_train)
+
+# predict cty from hwy for the test set
+mpg_test$pred <- predict(object = mpg_model,
+                         newdata = mpg_test)
+
+# Evaluate the rmse on both training and test data and print them
+# (rmse_train <- rmse(predcol = mpg_train$pred,
+#                     ycol = mpg_train$cty))
+# (rmse_test <- rmse(predcol = mpg_test$pred,
+#                    ycol = mpg_test$cty))
+
+
+# Evaluate the r-squared on both training and test data.and print them
+# (rsq_train <- r_squared(predcol = mpg_train$pred,
+#                         ycol = mpg_train$cty))
+# (rsq_test <- r_squared(predcol = mpg_test$pred,
+#                        ycol = mpg_test$cty))
+
+# Plot the predictions (on the x-axis) against the outcome (cty) on the test data
+ggplot(mpg_test,
+       aes(x = pred,
+           y = cty)) + 
+  geom_point() + 
+  geom_abline() +
+  theme_classic()
+```
+
+Good performance on the test data is more confirmation that the model works as expected.
+
+***
+# Create a Cross Validation Plan
+There are several ways to implement an n-fold cross validation plan. In this exercise you will create such a plan using `vtreat::kWayCrossValidation()`, and examine it.
+
+`kWayCrossValidation()` creates a cross validation plan with the following call:
+`splitPlan <- kWayCrossValidation(nRows, nSplits, dframe, y)`
+where `nRows` is the number of rows of data to be split, and `nSplits` is the desired number of cross-validation folds.
+
+Strictly speaking, `dframe` and `y` aren't used by `kWayCrossValidation`; they are there for compatibility with other vtreat data partitioning functions. You can set them both to `NULL`.
+
+The resulting `splitPlan` is a list of `nSplits` elements; each element contains two vectors:
+
+  * `train`: the indices of `dframe` that will form the training set
+  * `app`: the indices of `dframe` that will form the test (or application) set
+  
+In this exercise you will create a 3-fold cross-validation plan for the data set `mpg`
+
+```{r, message=FALSE}
+# Load the package vtreat
+library(vtreat)
+
+# Implement the 3-fold cross-fold plan with vtreat
+splitPlan <- kWayCrossValidation(nRows = N,
+                                 nSplits = 3,
+                                 dframe = NULL,
+                                 y = NULL)
+
+# Examine the split plan
+str(splitPlan)
+```
+
+You have created a 3-way cross validation plan. In the next exercise you will use this plan to evaluate a potential model.
+ 
+***
+# Evaluate a modeling procedure using n-fold Cross-Validation
+In this exercise you will use `splitPlan`, the 3-fold cross validation plan from the previous exercise, to make predictions from a model that predicts `mpg$cty` from `mpg$hwy`.
+
+If `dframe` is the training data, then one way to add a column of cross-validation predictions to the frame is as follows:
+
+Initialize a column of the appropriate length \
+`dframe$pred.cv <- 0` \
+k is the number of folds \
+splitPlan is the cross validation plan \
+`for(i in 1:k) {` \
+  Get the ith split \
+  `split <- splitPlan[[i]]` \
+  Build a model on the training data from this split (lm, in this case) \
+  `model <- lm(fmla, data = dframe[split$train,])` \
+  make predictions on the application data from this split \
+  `dframe$pred.cv[split$app] <- predict(model, newdata = dframe[split$app,])` \
+`}`
+
+Cross-validation predicts how well a model built from all the data will perform on new data. As with the test/train split, for a good modeling procedure, cross-validation performance and training performance should be close.
+
+```{r}
+# Run the 3-fold cross validation plan from splitPlan
+k <- 3 # Number of folds
+mpg$pred.cv <- 0 
+for(i in 1:k) {
+  split <- splitPlan[[i]]
+  model <- lm(cty ~ hwy,
+              data = mpg[split$train,])
+  mpg$pred.cv[split$app] <- predict(model,
+                                    newdata = mpg[split$app,])
+}
+
+# Predict from a full model
+mpg$pred <- predict(lm(cty ~ hwy, data = mpg))
+
+# Get the rmse of the full model's predictions
+# rmse(mpg$pred, mpg$cty)
+
+# Get the rmse of the cross-validation predictions
+# rmse(mpg$pred.cv, mpg$cty)
+```
+
+Remember, Cross-Validation validates the modeling process, not an actual model.
+
+***
+# Examining the Structure of Categorical Inputs
+In R, the categorical variable with N levels is converted into (N - 1) dummy/indicator variables.
+
+For this exercise you will call `model.matrix()` to examine how R represents data with both categorical and numerical inputs for modeling. The dataset `flowers` (derived from the `Sleuth3` package) is loaded into your workspace. It has the following columns:
+
+  * `Flowers`: the average number of flowers on a meadowfoam plant
+  * `Intensity`: the intensity of a light treatment applied to the plant
+  * `Time`: A categorical variable - when (Late or Early) in the lifecycle the light treatment occurred
+
+The ultimate goal is to predict `Flowers` as a function of `Time` and `Intensity`.
+
+```{r}
+# Importing the Flowers dataset from Sleuth3 package
+library(Sleuth3); data(case0901)
+
+flowers <- case0901
+
+# Call str on flowers to see the types of each column
+str(flowers)
+
+# Use unique() to see how many possible values Time takes
+unique(flowers$Time)
+# Here, 1 : Late and 0 : Early
+
+# Build a formula to express Flowers as a function of Intensity and Time: fmla. Print it
+(fmla <- as.formula("Flowers ~ Intensity + Time"))
+
+# Use fmla and model.matrix to see how the data is represented for modeling
+mmat <- model.matrix(object = fmla,
+                     data = flowers)
+
+# Examine the first 20 lines of flowers
+head(flowers, 20)
+
+# Examine the first 20 lines of mmat
+head(mmat)
+```
+
+Now you have seen how most R modeling functions represent categorical variables internally.
+
+***
+# Modeling with Categorical Inputs
+For this exercise you will fit a linear model to the `flowers` data, to predict `Flowers` as a function of `Time` and `Intensity`.
+
+The model formula `fmla` that you created in the previous exercise is still in your workspace, as is the model matrix `mmat.`
+
+```{r}
+# Fit a model to predict Flowers from Intensity and Time : flower_model
+flower_model <- lm(formula = fmla,
+                   data = flowers)
+
+# Use summary on mmat to remind yourself of its structure
+summary(mmat)
+
+# Use summary to examine flower_model 
+summary(flower_model)
+
+# Predict the number of flowers on each plant
+flowers$predictions <- predict(object = flower_model,
+                               newdata = flowers)
+
+# Plot predictions vs actual flowers (predictions on x-axis)
+ggplot(flowers,
+       aes(x = predictions,
+           y = Flowers)) + 
+  geom_point() +
+  geom_abline(color = "blue") +
+  theme_classic()
+```
+
+***
+# Modeling an Interaction
+In this exercise you will use interactions to model the effect of gender and gastric activity on alcohol metabolism.
+
+The data frame `alcohol` has columns:
+
+  * `Metabol`: the alcohol metabolism rate
+  * `Gastric`: the rate of gastric alcohol dehydrogenase activity
+  * `Sex`: the sex of the drinker (`Male` or `Female`)
+
+In the video, we fit three models to the `alcohol` data:
+
+  * One with only additive (main effect) terms : `Metabol ~ Gastric + Sex`
+  * Two models, each with interactions between gastric activity and sex
+
+We saw that one of the models with interaction terms had a better R-squared than the additive model, suggesting that using interaction terms gives a better fit. In this exercise we will compare the R-squared of one of the interaction models to the main-effects-only model.
+
+Recall that the operator `:` designates the interaction between two variables. The operator `*` designates the interaction between the two variables, plus the main effects.
+
+`x*y = x + y + x:y`
+
+```{r, message=FALSE}
+alcohol <- read_csv(file = "Alcohol.csv")
+
+# alcohol is in the workspace
+summary(alcohol)
+
+# Create the formula with main effects only
+(fmla_add <- as.formula(Metabol ~ Gastric + Sex))
+
+# Create the formula with interactions and only main effect of Gastric
+(fmla_interaction <- as.formula(Metabol ~ Gastric + Gastric:Sex))
+
+# Fit the main effects only model
+model_add <- lm(formula = fmla_add,
+                data = alcohol)
+
+# Fit the interaction model
+model_interaction <- lm(formula = fmla_interaction,
+                data = alcohol)
+
+# Call summary on both models and compare
+summary(model_add)
+summary(model_interaction)
+```
+
+An interaction appears to give a better fit to the data.
+
+In this exercise, you will compare the performance of the interaction model you fit in the previous exercise to the performance of a main-effects only model. Because this data set is small, we will use cross-validation to simulate making predictions on out-of-sample data.
+
+You will begin to use the `dplyr` package to do calculations.
+
+  * `mutate()` adds new columns to a tbl (a type of data frame)
+  * `group_by()` specifies how rows are grouped in a tbl
+  * `summarize()` computes summary statistics of a column
+
+You will also use `tidyr`'s `gather()` which takes multiple columns and collapses them into key-value pairs.
+
+```{r, message=FALSE}
+# Create the splitting plan for 3-fold cross validation
+set.seed(34245)  # set the seed for reproducibility
+splitPlan <- kWayCrossValidation(nrow(alcohol),
+                                 3,
+                                 NULL,
+                                 NULL)
+
+# Sample code: Get cross-val predictions for main-effects only model
+alcohol$pred_add <- 0  # initialize the prediction vector
+for(i in 1:3) {
+  split <- splitPlan[[i]]
+  model_add <- lm(fmla_add,
+                  data = alcohol[split$train,])
+  alcohol$pred_add[split$app] <- predict(model_add,
+                                         newdata = alcohol[split$app,])
+}
+
+# Get the cross-val predictions for the model with interactions
+alcohol$pred_interaction <- 0 # initialize the prediction vector
+for(i in 1:3) {
+  split <- splitPlan[[i]]
+  model_interaction <- lm(fmla_interaction,
+                          data = alcohol[split$train,])
+  alcohol$pred_interaction[split$app] <- predict(model_interaction,
+                                                 newdata = alcohol[split$app,])
+}
+
+# Get RMSE
+alcohol %>% 
+  gather(key = modeltype, value = pred, pred_add, pred_interaction) %>%
+  mutate(residuals = Metabol - pred) %>%      
+  group_by(modeltype) %>%
+  summarize(rmse = sqrt(mean(residuals^2)))
+```
+Cross-validation confirms that a model with interaction will likely give better predictions.
+
+```{r, message=FALSE}
+fdata <- read_csv(file = "Toy.csv")
+
+# fdata is in the workspace
+summary(fdata)
+
+# Examine the data: generate the summaries for the groups large and small:
+fdata %>% 
+    group_by(label) %>%         # group by small/large purchases
+    summarize(min  = min(y),    # min of y
+              mean = mean(y),   # mean of y
+              max  = max(y))    # max of y
+
+# Fill in the blanks to add error columns
+fdata2 <- fdata %>% 
+         group_by(label) %>%                # group by label
+           mutate(residual = y - pred,      # Residual
+                  relerr   = (y - pred)/y)  # Relative error
+
+# Compare the rmse and rmse.rel of the large and small groups:
+fdata2 %>% 
+  group_by(label) %>% 
+  summarize(rmse     = sqrt(mean((y - pred)^2)),       # RMSE
+            rmse.rel = sqrt(mean(((y - pred)/y)^2)))   # Root mean squared relative error
+            
+# Plot the predictions for both groups of purchases
+ggplot(fdata2, aes(x = pred, y = y, color = label)) + 
+  geom_point() + 
+  geom_abline() + 
+  facet_wrap(~ label, ncol = 1, scales = "free") + 
+  ggtitle("Outcome vs prediction") +
+  theme_classic()
+```
+
+Notice from this example how a model with larger RMSE might still be better, if relative errors are more important than absolute errors.
+
+
+***
+# Modeling Log-transformed Monetary Output
+In this exercise, you will practice modeling on log-transformed monetary output, and then transforming the "log-money" predictions back into monetary units. The data loaded into your workspace records subjects' incomes in 2005 (`Income2005`), as well as the results of several aptitude tests taken by the subjects in 1981:
+
+  * `Arith`
+  * `Word`
+  * `Parag`
+  * `Math`
+  * `AFQT` (Percentile on the Armed Forces Qualifying Test)
+The data have already been split into training and test sets (`income_train` and `income_test` respectively) and are in the workspace. You will build a model of log(income) from the inputs, and then convert log(income) back into income.
+
+```{r, message=FALSE}
+income_train <- read_csv(file = "Income2005 Train.csv")
+income_test <- read_csv(file = "Income2005 Test.csv")
+
+# Examine Income2005 in the training set
+summary(income_train$Income2005)
+
+# Write the formula for log income as a function of the tests and print it
+(fmla.log <- as.formula(log(Income2005) ~ Arith + Word + Parag + Math + AFQT))
+
+# Fit the linear model
+model.log <-  lm(formula = fmla.log,
+                 data = income_train)
+
+# Make predictions on income_test
+income_test$logpred <- predict(object = model.log,
+                               newdata = income_test)
+summary(income_test$logpred)
+
+# Convert the predictions to monetary units
+income_test$pred.income <- exp(income_test$logpred)
+summary(income_test$pred.income)
+
+#  Plot predicted income (x axis) vs income
+ggplot(income_test,
+       aes(x = pred.income,
+           y = Income2005)) + 
+  geom_point() + 
+  geom_abline(color = "blue") +
+  theme_classic()
+```
+
+Remember that when you transform the output before modeling, you have to 'reverse transform' the resulting predictions after applying the model.
+
+***
+# Comparing RMSE and Root-Mean-Squared Relative Error
+In this exercise, you will show that log-transforming a monetary output before modeling improves mean relative error (but increases RMSE) compared to modeling the monetary output directly. You will compare the results of `model.log` from the previous exercise to a model (`model.abs`) that directly fits income.
+
+The `income_train` and `income_test` datasets are loaded in your workspace, along with your model, `model.log`.
+
+Also in the workspace:
+
+`model.abs`: a model that directly fits income to the inputs using the formula
+
+`Income2005 ~ Arith + Word + Parag + Math + AFQT`
+
+```{r}
+# Create fmla.abs
+(fmla.abs <- as.formula(Income2005 ~ Arith + Word + Parag + Math + AFQT))
+ 
+# Building absolute model
+model.abs <- lm(formula = fmla.abs,
+                data = income_train)
+
+# model.abs is in the workspace
+summary(model.abs)
+
+# Add predictions to the test set
+income_test <- income_test %>%
+  mutate(pred.absmodel = predict(object = model.abs,
+                                 newdata = income_test),        # predictions from model.abs
+         pred.logmodel = exp(predict(model.log, income_test)))   # predictions from model.log
+
+# Gather the predictions and calculate residuals and relative error
+income_long <- income_test %>% 
+  gather(key = modeltype, value = pred, pred.absmodel, pred.logmodel) %>%
+  mutate(residual = pred - Income2005,   # residuals
+         relerr   = (pred - Income2005)/Income2005)   # relative error
+
+# Calculate RMSE and relative RMSE and compare
+income_long %>% 
+  group_by(modeltype) %>%      # group by modeltype
+  summarize(rmse     = sqrt(mean(residual^2)),    # RMSE
+            rmse.rel = sqrt(mean(relerr^2)))    # Root mean squared relative error
+```
+
+You've seen how modeling log(income) can reduce the relative error of the fit, at the cost of increased RMSE. Which tradeoff to make depends on the goals of your project.
+
+***
+# Input Transforms: the "hockey stick"
+In this exercise, we will build a model to predict price from a measure of the house's size (surface area). The data set `houseprice` has the columns:
+
+  * `price` : house price in units of $1000
+  * `size` : surface area
+A scatterplot of the data shows that the data is quite non-linear: a sort of "hockey-stick" where price is fairly flat for smaller houses, but rises steeply as the house gets larger. Quadratics and tritics are often good functional forms to express hockey-stick like relationships. Note that there may not be a "physical" reason that `price` is related to the square of the `size`; a quadratic is simply a closed form approximation of the observed relationship.
+
+<center><img src="http://s3.amazonaws.com/assets.datacamp.com/production/course_3851/datasets/Ch3_V4_houseprice.png"></center>
+
+You will fit a model to predict price as a function of the squared size, and look at its fit on the training data.
+
+Because `^` is also a symbol to express interactions, use the function `I()` to treat the expression `x^2` “as is”: that is, as the square of x rather than the interaction of `x` with itself.
+
+`exampleFormula = y ~ I(x^2)`
+
+```{r,echo=FALSE}
+houseprice <- read_csv(file = "House Price.csv")
+```
+
+
+```{r}
+# houseprice is in the workspace
+summary(houseprice)
+
+# Create the formula for price as a function of squared size
+(fmla_sqr <- as.formula(price ~ I(size^2)))
+
+# Fit a model of price as a function of squared size (use fmla_sqr)
+model_sqr <- lm(formula = fmla_sqr,
+                data = houseprice)
+
+# Fit a model of price as a linear function of size
+model_lin <- lm(formula = price ~ size,
+                data = houseprice)
+
+# Make predictions and compare
+houseprice %>% 
+    mutate(pred_lin = predict(object = model_lin,
+                              newdata = houseprice),       # predictions from linear model
+           pred_sqr = predict(object = model_sqr,
+                              newdata = houseprice)) %>%   # predictions from quadratic model 
+    gather(key = modeltype, value = pred, pred_lin, pred_sqr) %>% # gather the predictions
+    ggplot(aes(x = size)) + 
+       geom_point(aes(y = price)) +                   # actual prices
+       geom_line(aes(y = pred, color = modeltype)) + # the predictions
+       scale_color_brewer(palette = "Dark2") +
+    theme_classic()
+```
+
+Great work! In the next chapter you will see how transformations like this can sometimes be learned automatically.
+
+***
+# Input Transforms: the "hockey stick" (2)
+In the last exercise you saw that a quadratic model seems to fit the `houseprice` data better than a linear model. In this exercise you will confirm whether the quadratic model would perform better on out-of-sample data. Since this data set is small, you will use cross-validation. The quadratic formula `fmla_sqr` that you created in the last exercise is in your workspace.
+
+For comparison, the sample code will calculate cross-validation predictions from a linear model `price ~ size`.
+
+```{r}
+# houseprice is in the workspace
+summary(houseprice)
+
+# fmla_sqr is in the workspace
+fmla_sqr
+
+# Create a splitting plan for 3-fold cross validation
+set.seed(34245)  # set the seed for reproducibility
+splitPlan <- kWayCrossValidation(nrow(houseprice),
+                                 3,
+                                 NULL,
+                                 NULL)
+
+# Sample code: get cross-val predictions for price ~ size
+houseprice$pred_lin <- 0  # initialize the prediction vector
+for(i in 1:3) {
+  split <- splitPlan[[i]]
+  model_lin <- lm(price ~ size, data = houseprice[split$train,])
+  houseprice$pred_lin[split$app] <- predict(model_lin, newdata = houseprice[split$app,])
+}
+
+# Get cross-val predictions for price as a function of size^2 (use fmla_sqr)
+houseprice$pred_sqr <- 0 # initialize the prediction vector
+for(i in 1:3) {
+  split <- splitPlan[[i]]
+  model_sqr <- lm(formula = fmla_sqr, data = houseprice[split$train, ])
+  houseprice$pred_sqr[split$app] <- predict(model_sqr, newdata = houseprice[split$app, ])
+}
+
+# Gather the predictions and calculate the residuals
+houseprice_long <- houseprice %>%
+  gather(key = modeltype, value = pred, pred_lin, pred_sqr) %>%
+  mutate(residuals = pred - price)
+
+# Compare the cross-validated RMSE for the two models
+houseprice_long %>% 
+  group_by(modeltype) %>% # group by modeltype
+  summarize(rmse = sqrt(mean(residuals^2)))
+```
+
+You've confirmed that the quadratic input tranformation improved the model. In the next chapter you will see how transformations like this can sometimes be learned automatically.
+
+***
+# Fit a model of Sparrow Survival Probability
+In this exercise, you will estimate the probability that a sparrow survives a severe winter storm, based on physical characteristics of the sparrow. The dataset `sparrow` is loaded into your workspace. The outcome to be predicted is `status` ("Survived", "Perished"). The variables we will consider are:
+
+  * `total_length` : length of the bird from tip of beak to tip of tail (mm)
+  * `weight` : in grams
+  * `humerus` : length of humerus ("upper arm bone" that connects the wing to the body) (inches)
+
+Remember that when using `glm()` to create a logistic regression model, you must explicitly specify that `family = binomial`:
+
+`glm(formula, data = data, family = binomial)`
+
+You will call `summary()`, `broom::glance()` to see different functions for examining a logistic regression model. One of the diagnostics that you will look at is the analog to $R^2$, called $pseudo-R^2$.
+
+$pseudoR^2 = 1 - \frac{deviance}{null.deviance}$
+
+You can think of deviance as analogous to variance: it is a measure of the variation in categorical data. The $pseudoR^2$ is analogous to $R^2$ for standard regression: $R^2$ is a measure of the "variance explained" of a regression model. The $pseudoR^2$ is a measure of the "deviance explained".
+
+```{r, message=FALSE}
+sparrow <- read_csv(file = "Sparrow.csv")
+```
+
+```{r}
+head(sparrow)
+```
+
+```{r}
+# sparrow is in the workspace
+summary(sparrow)
+
+# Create the survived column
+sparrow$survived <- ifelse(test = sparrow$status == "Survived",
+                           yes = TRUE,
+                           no = FALSE)
+
+# Create the formula
+(fmla <- as.formula(survived ~ total_length + weight + humerus))
+
+# Fit the logistic regression model
+sparrow_model <- glm(formula = fmla,
+                     data = sparrow,
+                     family = "binomial")
+
+# Call summary
+summary(sparrow_model)
+
+# Call glance
+(perf <- glance(sparrow_model))
+
+# Calculate pseudo-R-squared
+(pseudoR2 <- 1 - (perf$deviance)/(perf$null.deviance))
+```
+
+You've fit a logistic regression model to predict probabilities! When looking at the $pseudoR^2$ of a logistic regression model, you should hope to see a value close to 1.
+
+***
+# Predict Sparrow Survival
+In this exercise you will predict the probability of survival using the sparrow survival model from the previous exercise.
+
+Recall that when calling `predict()` to get the predicted probabilities from a `glm()` model, you must specify that you want the response:
+
+`predict(model, type = "response")`
+
+Otherwise, `predict()` on a logistic regression model returns the predicted log-odds of the event, not the probability.
+
+You will also use the `GainCurvePlot()` function to plot the gain curve from the model predictions. If the model's gain curve is close to the ideal ("wizard") gain curve, then the model sorted the sparrows well: that is, the model predicted that sparrows that actually survived would have a higher probability of survival. The inputs to the `GainCurvePlot()` function are:
+
+* `frame` : data frame with prediction column and ground truth column
+* `xvar` : the name of the column of predictions (as a string)
+* `truthVar` : the name of the column with actual outcome (as a string)
+* `title` : a title for the plot (as a string)
+
+`GainCurvePlot(frame, xvar, truthVar, title)`
+
+```{r}
+# sparrow is in the workspace
+summary(sparrow)
+
+# sparrow_model is in the workspace
+summary(sparrow_model)
+
+# Make predictions
+sparrow$pred <- predict(object = sparrow_model,
+                        newdata = sparrow,
+                        type = "response")
+
+# Look at gain curve
+GainCurvePlot(frame = sparrow,
+              xvar = "pred",
+              truthVar = "survived",
+              "sparrow survival model")
+```
+
+You see from the gain curve that the model follows the wizard curve for about the first 30% of the data, identifying about 45% of the surviving sparrows with only a few false positives.
+
+***
+# Poisson or Quasipoisson
+One of the assumptions of Poisson regression to predict counts is that the event you are counting is Poisson distributed: the average count per unit time is the same as the variance of the count. In practice, "the same" means that the mean and the variance should be of a similar order of magnitude.
+
+When the variance is much larger than the mean, the Poisson assumption doesn't apply, and one solution is to use quasipoisson regression, which does not assume that variance=mean.
+
+For each of the following situations, decide if Poisson regression would be suitable, or if you should use quasipoisson regression.
+
+For which situations can you use Poisson regression?
+
+1. Number of days students are absent: mean 5.9, variance 49
+2. Number of awards a student wins: mean 0.6, variance 1.1
+3. Number of hits per website page: mean 108.2, variance 108.5
+4. Number of bikes rented per day: mean 273, variance 45863.84
+
+***
+# Fit a model to predict Bike Rental Counts
+In this exercise you will build a model to predict the number of bikes rented in an hour as a function of the weather, the type of day (holiday, working day, or weekend), and the time of day. You will train the model on data from the month of July.
+
+The data frame has the columns:
+
+* `cnt`: the number of bikes rented in that hour (the outcome)
+* `hr`: the hour of the day (0-23, as a factor)
+* `holiday`: TRUE/FALSE
+* `workingday`: TRUE if neither a holiday nor a weekend, else FALSE
+* `weathersit`: categorical, "Clear to partly cloudy"/"Light Precipitation"/"Misty"
+* `temp`: normalized temperature in Celsius
+* `atemp`: normalized "feeling" temperature in Celsius
+* `hum`: normalized humidity
+* `windspeed`: normalized windspeed
+* `instant`: the time index -- number of hours since beginning of data set (not a variable)
+* `mnth` and `yr`: month and year indices (not variables)
+
+Remember that you must specify `family = poisson` or `family = quasipoisson` when using `glm()` to fit a count model.
+
+Since there are a lot of input variables, for convenience we will specify the outcome and the inputs in variables, and use `paste()` to assemble a string representing the model formula.
+
+```{r, message=FALSE}
+# Imporing Bikes July dataset
+bikesJuly <- read_csv(file = "Bikes July.csv")
+```
+
+```{r}
+bikesJuly$hr <- as.factor(bikesJuly$hr)
+head(bikesJuly)
+
+# bikesJuly is in the workspace
+summary(bikesJuly)
+
+# The outcome column
+(outcome <- "cnt")
+
+# The inputs to use
+(vars <- c("hr","holiday","workingday","weathersit","temp","atemp","hum","windspeed"))
+
+# Create the formula string for bikes rented as a function of the inputs
+(fmla <- paste(outcome, "~", paste(vars, collapse = " + ")))
+
+# Calculate the mean and variance of the outcome
+(mean_bikes <- mean(bikesJuly$cnt))
+(var_bikes <- var(bikesJuly$cnt))
+
+# Fit the model
+bike_model <- glm(formula = fmla,
+                  data = bikesJuly,
+                  family = "quasipoisson")
+
+# Call glance
+(perf <- glance(bike_model))
+
+# Calculate pseudo-R-squared
+(pseudoR2 <- 1 - (perf$deviance)/(perf$null.deviance))
+```
+
+You've fit a (quasi)poisson model to predict counts! As with a logistic model, you hope for a $pseudoR^2$ near 1.
+
+***
+# Predict Bike Rentals on new data
+In this exercise you will use the model you built in the previous exercise to make predictions for the month of August. The data set `bikesAugust` has the same columns as `bikesJuly`.
+
+Recall that you must specify `type = "response"` with `predict()` when predicting counts from a `glm` poisson or quasipoisson model.
+
+```{r, message=FALSE}
+# Importing Bikes August dataset
+bikesAugust <- read_csv(file = "Bikes August.csv")
+```
+
+```{r}
+bikesAugust$hr <- as.factor(bikesAugust$hr)
+
+# bikesAugust is in the workspace
+str(bikesAugust)
+
+# bike_model is in the workspace
+summary(bike_model)
+
+# Make predictions on August data
+bikesAugust$pred  <- predict(object = bike_model,
+                             newdata = bikesAugust,
+                             type = "response")
+
+# Calculate the RMSE
+bikesAugust %>% 
+  mutate(residual = pred - cnt) %>%
+  summarize(rmse  = sqrt(mean(residual^2)))
+
+# Plot predictions vs cnt (pred on x-axis)
+ggplot(bikesAugust,
+       aes(x = pred,
+           y = cnt)) +
+  geom_point() + 
+  geom_abline(color = "darkblue") +
+  theme_classic()
+```
+
+***
+<h1 style="color:#33AACC; font-size:500%; text-align:center">Thank You</h1>
