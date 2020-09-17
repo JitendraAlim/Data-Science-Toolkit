@@ -916,4 +916,4 @@ What can you say about the "best" way to cluster this data?
 All 3 statements are correct but there is no quantitative way to determine which of these clustering approaches is the right one without further exploration.
 
 ***
-<center><h1>Thank You!</h1></center>
+<h1 style="color:#33AACC; font-size:500%; text-align:center">Thank You!</h1>
