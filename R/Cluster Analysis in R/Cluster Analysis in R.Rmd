@@ -1,6 +1,8 @@
 ---
 title: <h1 style="color:#33AACC; font-size:500%; text-align:center">Cluster Analysis in R</h1>
-output: html_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 
