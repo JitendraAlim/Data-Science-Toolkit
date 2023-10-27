@@ -128,58 +128,69 @@ financial_year <- function(date) {
 
 ###### STANDARDIZE BRANCH CODE ######
 
-branchid <- function(x) {
-
-  bm = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/Branch_Master.RDS') %>% 
-    pull(Branch_Code)
-  x = as.character(x)
-  x = str_remove_all(string = x, pattern = '[^0-9]')
-  x = str_pad(string = x, width = 4, side = 'left', pad = '0')
-  x = case_when(x %in% bm ~ x)
-  return(x)
+branchid <- function(id) {
+  
+  id_chars = 4
+  branches = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/Branch_Master.RDS') %>% pull(Branch_Code)
+  id = as.character(id)
+  id = str_remove_all(string = id, pattern = '[^0-9]')
+  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = case_when(id %in% branches ~ id)
+  return(id)
   
 }
 
 
 ###### STANDARDIZE EMPLOYEE CODE ######
 
-empid <- function(x) {
+empid <- function(id) {
 
-  x = as.character(x)
-  x = str_remove_all(string = x, pattern = '[^0-9]')
-  x = str_pad(string = x, width = 5, side = 'left', pad = '0')
-  x = case_when(nchar(x) <= 5 ~ x)
-  return(x)
+  id_chars = 5
+  id = as.character(id)
+  id = str_remove_all(string = id, pattern = '[^0-9]')
+  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = case_when(nchar(id) <= width ~ id)
+  return(id)
   
 }
 
-empid_bbb <- function(x) {
-  
-  em = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_ID)
-  x = as.character(x)
-  x = str_remove_all(string = x, pattern = '[^0-9]')
-  x = case_when(nchar(x) <= 5 ~ x)
-  x = str_pad(string = x, width = 5, side = 'left', pad = '0')
-  x = case_when(x %in% em ~ x)
-  return(x)
+empid_bbb <- function(id) {
+
+  id_chars = 5
+  empids = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_ID)
+  id = as.character(id)
+  id = str_remove_all(string = id, pattern = '[^0-9]')
+  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = case_when(id %in% empids ~ id)
+  return(id)
   
 }
 
 
-###### STANDARDIZE EMAIL ######
+###### EMAIL ######
 
-email_office <- function(x) {
-  str_extract(string = str_to_lower(x),
-              pattern = '\\b[\\w.%+-]+@rblbank\\.com\\b')
-}
-
-email <- function(x) {
-  str_extract(string = str_to_lower(x),
+email <- function(id) {
+  str_extract(string = str_to_lower(id),
               pattern = '\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b')
 }
 
+email_office1 <- function(id, domain) {
+  str_extract(string = str_to_lower(id),
+              pattern = paste0('\\b[\\w.%+-]+@', domain, '\\b'))
+}
 
-###### PROCESS MOBILE ######
+email_office2 <- function(id) {
+  
+  emails = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_Email)
+  
+  id = email(id)
+  id = case_when(id %in% emails ~ id)
+  return(id)
+  
+}
+
+
+###### MOBILE ######
 
 mobile <- function(x) {
   
