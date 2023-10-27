@@ -128,13 +128,18 @@ financial_year <- function(date) {
 
 ###### STANDARDIZE BRANCH CODE ######
 
-branchid <- function(id) {
+branchid <- function(id, id_chars_branch) {
   
-  id_chars = 4
-  branches = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/Branch_Master.RDS') %>% pull(Branch_Code)
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
-  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = str_pad(string = id, width = id_chars_branch, side = 'left', pad = '0')
+  return(id)
+  
+}
+
+branchid_valid <- function(id, id_chars_branch, branches) {
+  
+  id = branchid(id)
   id = case_when(id %in% branches ~ id)
   return(id)
   
@@ -143,24 +148,19 @@ branchid <- function(id) {
 
 ###### STANDARDIZE EMPLOYEE CODE ######
 
-empid <- function(id) {
+empid <- function(id, id_chars_emp) {
 
-  id_chars = 5
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
-  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = str_pad(string = id, width = id_chars_emp, side = 'left', pad = '0')
   id = case_when(nchar(id) <= width ~ id)
   return(id)
   
 }
 
-empid_bbb <- function(id) {
+empid_valid <- function(id, id_chars_emp, empids) {
 
-  id_chars = 5
-  empids = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_ID)
-  id = as.character(id)
-  id = str_remove_all(string = id, pattern = '[^0-9]')
-  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
+  id = empid(id)
   id = case_when(id %in% empids ~ id)
   return(id)
   
@@ -174,17 +174,15 @@ email <- function(id) {
               pattern = '\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b')
 }
 
-email_office1 <- function(id, domain) {
+email_n_domain <- function(id, domain) {
   str_extract(string = str_to_lower(id),
               pattern = paste0('\\b[\\w.%+-]+@', domain, '\\b'))
 }
 
-email_office2 <- function(id) {
-  
-  emails = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_Email)
+email_valid <- function(id, email_list) {
   
   id = email(id)
-  id = case_when(id %in% emails ~ id)
+  id = case_when(id %in% email_list ~ id)
   return(id)
   
 }
