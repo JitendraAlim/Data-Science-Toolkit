@@ -163,20 +163,20 @@ empid <- function(id, id_chars_emp, valid_empids = NA) {
 
 ###### EMAIL ######
 
-email <- function(id) {
-  str_extract(string = str_to_lower(id),
-              pattern = '\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b')
-}
-
-email_n_domain <- function(id, domain) {
-  str_extract(string = str_to_lower(id),
-              pattern = paste0('\\b[\\w.%+-]+@', domain, '\\b'))
-}
-
-email_valid <- function(id, email_list) {
+email <- function(id, valid_emails = NA, domains = NA) {
   
-  id = email(id)
-  id = case_when(id %in% email_list ~ id)
+  if (any(is.na(domains))) {
+    id = str_extract(string = str_to_lower(id),
+                     pattern = '\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b')
+  } else {
+    id = str_extract(string = str_to_lower(id),
+                     pattern = paste0('\\b[\\w.%+-]+@(', paste0(domains, collapse = '|'), ')\\b'))
+  }
+  
+  if (any(!is.na(valid_emails))) {
+    id = case_when(id %in% valid_emails ~ id)
+  }
+  
   return(id)
   
 }
