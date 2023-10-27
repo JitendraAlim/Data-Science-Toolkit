@@ -128,19 +128,16 @@ financial_year <- function(date) {
 
 ###### STANDARDIZE BRANCH CODE ######
 
-branchid <- function(id, id_chars_branch) {
+branchid <- function(id, id_chars_branch, valid_branches = NA) {
   
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
   id = str_pad(string = id, width = id_chars_branch, side = 'left', pad = '0')
-  return(id)
   
-}
-
-branchid_valid <- function(id, id_chars_branch, branches) {
+  if (any(!is.na(valid_branches))) {
+    id = case_when(id %in% valid_branches ~ id)
+  }
   
-  id = branchid(id = id, id_chars_branch = id_chars_branch)
-  id = case_when(id %in% branches ~ id)
   return(id)
   
 }
@@ -148,20 +145,17 @@ branchid_valid <- function(id, id_chars_branch, branches) {
 
 ###### STANDARDIZE EMPLOYEE CODE ######
 
-empid <- function(id, id_chars_emp) {
-
+empid <- function(id, id_chars_emp, valid_empids = NA) {
+  
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
   id = str_pad(string = id, width = id_chars_emp, side = 'left', pad = '0')
-  id = case_when(nchar(id) <= width ~ id)
-  return(id)
+  id = case_when(nchar(id) <= id_chars_emp ~ id)
   
-}
-
-empid_valid <- function(id, id_chars_emp, empids) {
-
-  id = empid(id = id, id_chars_emp = id_chars_emp)
-  id = case_when(id %in% empids ~ id)
+  if (any(!is.na(valid_empids))) {
+    id = case_when(id %in% valid_empids ~ id)
+  }
+  
   return(id)
   
 }
