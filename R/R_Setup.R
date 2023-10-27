@@ -32,9 +32,7 @@ try(expr = {
   library(RODBC)
   
   BBB  <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=BBB;trusted_connection=yes')
-
   CRM  <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=CRM;trusted_connection=yes')
-  
   BAAS <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=BAAS;trusted_connection=yes')
   
   query <- function(channel, query) {
@@ -76,31 +74,24 @@ nas <- c('',
 
 ###### ~~~~~~~~~~ CUSTOM FUNCTIONS ~~~~~~~~~~ ######
 
+###### CLEAN UNIQUE ID ######
 
-###### CLEAN ACCOUNT NUMBER ######
-
-clean_account <- function(Account_Number) {
-  
-  str_remove_all(string = as.character(Account_Number), pattern = '[^0-9]')
-  
+remove_prefix <- function(id) {
+  str_remove(string = id, pattern = '~')
 }
 
 
 ###### END OF MONTH ######
 
 eomonth <- function(date) {
-  
   ceiling_date(x = date, unit = 'month') - days(1)
-  
 }
 
 
 ###### START OF MONTH ######
 
 somonth <- function(date) {
-  
   floor_date(x = date, unit = 'month')
-
 }
 
 
@@ -129,114 +120,119 @@ fy_boundary <- function(date, boundary) {
 ###### FINANCIAL YEAR ######
 
 financial_year <- function(date) {
-  
   if_else(condition = month(date) > 3,
           true = paste0('FY', year(date) + 1),
           false = paste0('FY', year(date)))
-  
 }
 
 
 ###### STANDARDIZE BRANCH CODE ######
 
-process_branch_code <- function(code) {
+branchid <- function(x) {
 
   bm = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/Branch_Master.RDS') %>% 
     pull(Branch_Code)
-  code = as.character(code)
-  code = str_remove_all(string = code, pattern = '[^0-9]')
-  code = str_pad(string = code, width = 4, side = 'left', pad = '0')
-  code = case_when(code %in% bm ~ code)
-  return(code)
+  x = as.character(x)
+  x = str_remove_all(string = x, pattern = '[^0-9]')
+  x = str_pad(string = x, width = 4, side = 'left', pad = '0')
+  x = case_when(x %in% bm ~ x)
+  return(x)
   
 }
 
 
 ###### STANDARDIZE EMPLOYEE CODE ######
 
-process_emp_code <- function(code) {
+empid <- function(x) {
 
-  code = as.character(code)
-  code = str_remove_all(string = code, pattern = '[^0-9]')
-  code = str_pad(string = code, width = 5, side = 'left', pad = '0')
-  code = case_when(nchar(code) <= 5 ~ code)
-  return(code)
+  x = as.character(x)
+  x = str_remove_all(string = x, pattern = '[^0-9]')
+  x = str_pad(string = x, width = 5, side = 'left', pad = '0')
+  x = case_when(nchar(x) <= 5 ~ x)
+  return(x)
   
 }
 
-process_bbb_emp_code <- function(code) {
+empid_bbb <- function(x) {
   
   em = readRDS(file = '//FSCLUS02/HADOOP$/BBB_Master_Files/BBB_Employee_Master.RDS') %>% pull(Emp_ID)
-  code = as.character(code)
-  code = str_remove_all(string = code, pattern = '[^0-9]')
-  code = case_when(nchar(code) <= 5 ~ code)
-  code = str_pad(string = code, width = 5, side = 'left', pad = '0')
-  code = case_when(code %in% em ~ code)
-  return(code)
+  x = as.character(x)
+  x = str_remove_all(string = x, pattern = '[^0-9]')
+  x = case_when(nchar(x) <= 5 ~ x)
+  x = str_pad(string = x, width = 5, side = 'left', pad = '0')
+  x = case_when(x %in% em ~ x)
+  return(x)
   
 }
 
 
 ###### STANDARDIZE EMAIL ######
 
-process_rbl_email <- function(email) {
-  
-  str_extract(string = str_to_lower(email),
+email_office <- function(x) {
+  str_extract(string = str_to_lower(x),
               pattern = '\\b[\\w.%+-]+@rblbank\\.com\\b')
-  
 }
 
-process_email <- function(email) {
-  
-  str_extract(string = str_to_lower(email),
+email <- function(x) {
+  str_extract(string = str_to_lower(x),
               pattern = '\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b')
-  
 }
 
 
 ###### PROCESS MOBILE ######
 
-process_mobile <- function(Mobile) {
+mobile <- function(x) {
   
-  Mobile = as.character(Mobile)
-  Mobile = str_remove_all(string = Mobile, pattern = '[^0-9]')
-  Mobile = str_sub(string = Mobile, start = -10, end = -1)
-  Mobile = round(x = as.numeric(x = Mobile), digits = 0)
-  Mobile = case_when(Mobile >= 6000000000 & Mobile <= 9999999999 ~ Mobile)
-  Mobile = as.character(Mobile)
-  return(Mobile)
+  x = as.character(x)
+  x = str_remove_all(string = x, pattern = '[^0-9]')
+  x = str_sub(string = x, start = -10, end = -1)
+  x = round(x = as.numeric(x = x), digits = 0)
+  x = case_when(x >= 6000000000 & x <= 9999999999 ~ x)
+  x = as.character(x)
+  return(x)
   
 }
 
 
 ###### EXTRACT PAN CARD NUMBER ######
 
-extract_pan <- function(String) {
-  
-  str_extract(string = str_to_upper(String),
-              pattern = '[A-Z]{5}[0-9]{4}[A-Z]{1}')
-  
+extract_pan <- function(x) {
+  str_extract(string = str_to_upper(x),
+              pattern = '[A-Z]{3}[ABCFGHLJPT][A-Z]\\d{4}[A-Z]{1}')
 }
 
 
 ###### CLEAN COLUMN HEADERS ######
 
-clean_headers <- function(Data) {
+clean_headers <- function(df) {
   
-  names(Data) = str_to_lower(string = names(Data))
-  names(Data) = str_trim(string = names(Data))
-  names(Data) = str_remove_all(string = names(Data), pattern = '[^[:alnum:]]+')
+  names(df) = str_to_lower(string = names(df))
+  names(df) = str_trim(string = names(df))
+  names(df) = str_remove_all(string = names(df), pattern = '[^[:alnum:]]+')
   
-  return(Data)
+  names_df = data.frame(Order = 1:length(names(df)),
+                        Names = names(df)) %>% 
+    group_by(Names) %>% 
+    mutate(Row_Number = row_number(),
+           Row_Number = Row_Number - 1,
+           New_Names = paste0(Names, Row_Number),
+           New_Names = if_else(condition = str_sub(string = New_Names,
+                                                   start = -1,
+                                                   end = -1) == '0',
+                               true = as.character(Names),
+                               false = as.character(New_Names)))
+  
+  names(df) = names_df$New_Names
+  return(df)
   
 }
 
 
 ###### CLEAN SHEET NAMES ######
 
-clean_sheet_names <- function(Path) {
+clean_sheet_names <- function(path) {
   
-  sheet_names = excel_sheets(Path)
+  sheet_names = excel_sheets(path)
   clean_headers = sheet_names
   clean_headers = str_to_lower(string = clean_headers)
   clean_headers = str_trim(string = clean_headers)
