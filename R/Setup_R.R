@@ -91,16 +91,16 @@ financial_year <- function(date) {
 }
 
 
-###### STANDARDIZE BRANCH CODE ######
+###### PROCESS ID ######
 
-branchid <- function(id, id_chars_branch, valid_branches = NA) {
+process_id <- function(id, id_chars, valid_id = NA) {
   
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
-  id = str_pad(string = id, width = id_chars_branch, side = 'left', pad = '0')
+  id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
   
-  if (any(!is.na(valid_branches))) {
-    id = case_when(id %in% valid_branches ~ id)
+  if (any(!is.na(valid_id))) {
+    id = case_when(id %in% valid_id ~ id)
   }
   
   return(id)
@@ -108,27 +108,9 @@ branchid <- function(id, id_chars_branch, valid_branches = NA) {
 }
 
 
-###### STANDARDIZE EMPLOYEE CODE ######
+###### PROCESS EMAIL ######
 
-empid <- function(id, id_chars_emp, valid_empids = NA) {
-  
-  id = as.character(id)
-  id = str_remove_all(string = id, pattern = '[^0-9]')
-  id = str_pad(string = id, width = id_chars_emp, side = 'left', pad = '0')
-  id = case_when(nchar(id) <= id_chars_emp ~ id)
-  
-  if (any(!is.na(valid_empids))) {
-    id = case_when(id %in% valid_empids ~ id)
-  }
-  
-  return(id)
-  
-}
-
-
-###### EMAIL ######
-
-email <- function(id, valid_emails = NA, domains = NA) {
+process_email <- function(id, valid_emails = NA, domains = NA) {
   
   if (any(is.na(domains))) {
     id = str_extract(string = str_to_lower(id),
@@ -147,9 +129,9 @@ email <- function(id, valid_emails = NA, domains = NA) {
 }
 
 
-###### MOBILE ######
+###### PROCESS MOBILE ######
 
-mobile <- function(x) {
+process_mobile <- function(x) {
   
   x = as.character(x)
   x = str_remove_all(string = x, pattern = '[^0-9]')
