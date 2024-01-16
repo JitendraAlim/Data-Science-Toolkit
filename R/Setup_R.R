@@ -93,14 +93,14 @@ financial_year <- function(date) {
 
 ###### PROCESS ID ######
 
-process_id <- function(id, id_chars, valid_id = NA) {
+process_id <- function(id, id_chars, valid_ids = NA) {
   
   id = as.character(id)
   id = str_remove_all(string = id, pattern = '[^0-9]')
   id = str_pad(string = id, width = id_chars, side = 'left', pad = '0')
   
-  if (any(!is.na(valid_id))) {
-    id = case_when(id %in% valid_id ~ id)
+  if (any(!is.na(valid_ids))) {
+    id = case_when(id %in% valid_ids ~ id)
   }
   
   return(id)
