@@ -7,11 +7,6 @@ Sys.setenv(TZ = 'Asia/Calcutta')
 options(java.parameters = '-Xmx48g',
         scipen = 999,
         warn = -1)
-		
-		
-###### SHARED DRIVE PATH ######
-
-JIT <- 'FOLDER PATH'
 
 
 ###### LIBRARIES ######
@@ -23,36 +18,6 @@ library(lubridate)
 library(stringr)
 library(readxl)
 library(writexl)
-
-
-###### DATABASE CONNECTION ######
-
-try(expr = {
-  
-  library(RODBC)
-  
-  BBB  <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=BBB;trusted_connection=yes')
-  CRM  <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=CRM;trusted_connection=yes')
-  BAAS <- odbcDriverConnect('driver={ODBC Driver 17 for SQL Server};server=10.80.44.62,21444;database=BAAS;trusted_connection=yes')
-  
-  query <- function(channel, query) {
-    
-    t1 = Sys.time()
-    
-    out = sqlQuery(channel, query)
-    
-    t2 = Sys.time()
-    
-    print(paste('Execution Time :', format(round(t2 - t1, 2))))
-    print(paste('End Time :', format(x = Sys.time(), format = '%Y-%m-%d %H:%M')))
-    
-    return(out)
-    
-    }
-  
-  },
-  
-  silent = TRUE)
 
 
 ###### DEFINING NAS ######
