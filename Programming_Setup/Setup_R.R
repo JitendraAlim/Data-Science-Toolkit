@@ -23,18 +23,17 @@ library(writexl)
 ###### DEFINING NAS ######
 
 nas <- c('',
+         '-',
+         'Not Available',
          'NA',
          '#N/A',
-         '#REF',
          'N/A',
+         '<NA>',
          '\\N',
          'NULL',
          'null',
-         '<NA>',
          'NIL',
-         '-',
-         'Yet to Launch',
-         'TBH')
+         '#REF')
 
 
 ###### ~~~~~~~~~~ CUSTOM FUNCTIONS ~~~~~~~~~~ ######
