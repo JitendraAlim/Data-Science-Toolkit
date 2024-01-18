@@ -122,11 +122,21 @@ process_email <- function(id, valid_emails = NA, domains = NA) {
 ###### PROCESS MOBILE ######
 
 process_mobile <- function(x) {
+	dummy_mobiles = c('6666666666',
+										'7000000000',
+                    '7777777777',
+                    '8000000000',
+                    '8888888888',
+                    '9000000000',
+                    '9898989898')
   x = as.character(x)
   x = str_remove_all(string = x, pattern = '[^0-9]')
   x = str_sub(string = x, start = -10, end = -1)
   x = round(x = as.numeric(x = x), digits = 0)
-  x = case_when(x >= 6000000000 & x <= 9999999999 ~ x)
+  mobile = case_when(mobile > 6000000000 & 
+                       mobile < 9999999999  &
+                       !mobile %in% dummy_mobiles
+                     ~ mobile)
   x = as.character(x)
   return(x)
 }
