@@ -81,11 +81,11 @@ def process_mobile(mobile):
 def extract_pan(string):
 	"""
  	Description:
-  	------------
-   	This function is used to extract PAN number from string.
-	
- 	Parameter(s):
-  	-------------
+	------------
+	This function is used to extract PAN number from string.
+
+	Parameter(s):
+	-------------
    	string(str): Data consisting PAN number
 	
  	Return(s):
