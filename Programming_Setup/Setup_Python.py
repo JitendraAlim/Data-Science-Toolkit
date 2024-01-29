@@ -81,17 +81,17 @@ def process_mobile(mobile):
 def extract_pan(string):
 	"""
  	Description:
-    ------------
-    This function is used to extract PAN number from string.
-    
-    Parameter(s):
-    -------------
-    string(str): Data consisting PAN number
-    
-    Return(s):
-    ----------
-    PAN Number
-    """
+  	------------
+   	This function is used to extract PAN number from string.
+	
+ 	Parameter(s):
+  	-------------
+   	string(str): Data consisting PAN number
+	
+ 	Return(s):
+  	----------
+   	PAN Number
+	"""
     string = string.upper()
     pattern = r'[A-Z]{3}[ABCFGHLJPT][A-Z]\d{4}[A-Z]{1}'
     pan_match = re.search(pattern, string)
